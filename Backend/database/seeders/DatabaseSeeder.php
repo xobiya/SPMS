@@ -3,23 +3,36 @@
 namespace Database\Seeders;
 
 use App\Models\User;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use App\Models\FeeSchedule;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
+use Carbon\Carbon;
 
 class DatabaseSeeder extends Seeder
 {
-    use WithoutModelEvents;
-
     /**
      * Seed the application's database.
      */
     public function run(): void
     {
-        // User::factory(10)->create();
+        // Admin/Finance User
+        User::updateOrCreate(
+            ['email' => 'finance@amu.edu.et'],
+            [
+                'name' => 'Finance Admin',
+                'role' => 'ADMIN',
+                'password' => Hash::make('password'),
+            ]
+        );
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
+        // Initial Fee Schedule
+        FeeSchedule::updateOrCreate(
+            ['academic_year' => '2025/2026', 'semester' => 1],
+            [
+                'monthly_amount' => 500.00,
+                'effective_from' => Carbon::now()->startOfYear(),
+                'effective_to' => Carbon::now()->endOfYear(),
+            ]
+        );
     }
 }
