@@ -16,7 +16,7 @@ class PaymentController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'reference_number' => 'required|string|unique:payments,reference_number,' . $id,
-            'slip' => 'required|image|mimes:jpeg,png,jpg,pdf|max:5120', // 5MB limit
+            'slip' => 'required|file|mimes:jpeg,png,jpg,pdf|max:5120', // 5MB limit
             'payment_method' => 'required|string',
         ]);
 

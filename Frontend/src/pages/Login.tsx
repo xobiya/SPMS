@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { GraduationCap, LogIn, ShieldCheck } from 'lucide-react';
+import axios from 'axios';
 import api from '../api/axios';
-import { LogIn, GraduationCap } from 'lucide-react';
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -14,121 +15,104 @@ const Login: React.FC = () => {
     e.preventDefault();
     setLoading(true);
     setError('');
+
     try {
       const response = await api.post('/login', { email, password });
       const { access_token, user } = response.data;
+
       localStorage.setItem('token', access_token);
       localStorage.setItem('user', JSON.stringify(user));
-      
+
       if (user.role === 'STUDENT') {
         navigate('/student/dashboard');
-      } else {
-        navigate('/admin/dashboard');
+        return;
       }
-    } catch (err: any) {
-      setError(err.response?.data?.error || 'Login failed. Please check your credentials.');
+
+      navigate('/admin/dashboard');
+    } catch (err: unknown) {
+      if (axios.isAxiosError(err) && err.response?.data?.errors) {
+        const errors = Object.values(err.response.data.errors as Record<string, string[]>).flat();
+        setError(errors.join(' '));
+      } else if (axios.isAxiosError(err)) {
+        setError((err.response?.data as { error?: string } | undefined)?.error || 'Login failed. Please check your credentials.');
+      } else {
+        setError('Login failed. Please check your credentials.');
+      }
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-height-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="flex justify-center">
-          <GraduationCap className="h-12 w-12 text-blue-600" />
-        </div>
-        <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-          AMU SPMS
-        </h2>
-        <p className="mt-2 text-center text-sm text-gray-600">
-          Student Payment Management System
-        </p>
-      </div>
+    <div className="min-h-screen bg-slate-100 flex items-center justify-center p-6">
+      <div className="w-full max-w-5xl grid lg:grid-cols-2 overflow-hidden rounded-2xl shadow-2xl bg-white">
+        <section className="hidden lg:flex flex-col justify-between bg-gradient-to-br from-blue-700 to-indigo-800 text-white p-10">
+          <div>
+            <div className="inline-flex items-center gap-2 rounded-full bg-white/20 px-4 py-1 text-sm">
+              <ShieldCheck className="h-4 w-4" /> Secure access
+            </div>
+            <h1 className="mt-8 text-4xl font-bold leading-tight">AMU Student Payment Management System</h1>
+            <p className="mt-4 text-blue-100">Track fee schedules, submit payment slips, and monitor verification in one place.</p>
+          </div>
+          <p className="text-sm text-blue-100">Designed for students and finance administrators.</p>
+        </section>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
-          <form className="space-y-6" onSubmit={handleLogin}>
-            {error && (
-              <div className="bg-red-50 border-l-4 border-red-400 p-4">
-                <div className="flex">
-                  <div className="ml-3">
-                    <p className="text-sm text-red-700">{error}</p>
-                  </div>
-                </div>
-              </div>
-            )}
+        <section className="p-8 md:p-10">
+          <div className="flex items-center gap-3 mb-8">
+            <div className="rounded-lg bg-blue-100 p-2">
+              <GraduationCap className="h-6 w-6 text-blue-700" />
+            </div>
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                Email address
-              </label>
-              <div className="mt-1">
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  autoComplete="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label htmlFor="password" name="password" className="block text-sm font-medium text-gray-700">
-                Password
-              </label>
-              <div className="mt-1">
-                <input
-                  id="password"
-                  name="password"
-                  type="password"
-                  autoComplete="current-password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                />
-              </div>
-            </div>
-
-            <div>
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
-              >
-                {loading ? 'Signing in...' : 'Sign in'}
-                <LogIn className="ml-2 h-4 w-4" />
-              </button>
-            </div>
-          </form>
-          
-          <div className="mt-6">
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-300" />
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white text-gray-500">Demo Accounts</span>
-              </div>
-            </div>
-            <div className="mt-6 grid grid-cols-2 gap-3 text-xs text-gray-500 text-center">
-              <div>
-                <p className="font-semibold">Student</p>
-                <p>abebe.kebede@amu.edu.et</p>
-                <p>password</p>
-              </div>
-              <div>
-                <p className="font-semibold">Finance (Need Seeding)</p>
-                <p>finance@amu.edu.et</p>
-                <p>password</p>
-              </div>
+              <h2 className="text-2xl font-bold text-slate-900">Welcome back</h2>
+              <p className="text-sm text-slate-600">Sign in to continue</p>
             </div>
           </div>
-        </div>
+
+          <form className="space-y-5" onSubmit={handleLogin}>
+            {error && <p className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</p>}
+
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium text-slate-700">Email address</label>
+              <input
+                id="email"
+                type="email"
+                autoComplete="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="password" className="block text-sm font-medium text-slate-700">Password</label>
+              <input
+                id="password"
+                type="password"
+                autoComplete="current-password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="inline-flex w-full items-center justify-center rounded-md bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {loading ? 'Signing in...' : 'Sign in'}
+              <LogIn className="ml-2 h-4 w-4" />
+            </button>
+          </form>
+
+          <div className="mt-8 rounded-md bg-slate-50 border border-slate-200 p-4 text-xs text-slate-600">
+            <p className="font-semibold text-slate-800 mb-2">Demo Accounts</p>
+            <p>Student: <span className="font-medium">abebe.kebede@amu.edu.et / password</span></p>
+            <p>Finance: <span className="font-medium">finance@amu.edu.et / password</span></p>
+          </div>
+        </section>
       </div>
     </div>
   );

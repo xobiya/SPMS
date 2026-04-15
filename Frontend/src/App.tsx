@@ -1,19 +1,25 @@
+import type { ReactElement } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './pages/Login';
 import StudentDashboard from './pages/StudentDashboard';
 import AdminDashboard from './pages/AdminDashboard';
 
-const PrivateRoute = ({ children, role }: { children: JSX.Element, role?: string }) => {
+type PrivateRouteProps = {
+  children: ReactElement;
+  roles?: string[];
+};
+
+const PrivateRoute = ({ children, roles }: PrivateRouteProps) => {
   const token = localStorage.getItem('token');
   const userStr = localStorage.getItem('user');
   const user = userStr ? JSON.parse(userStr) : null;
 
-  if (!token) {
-    return <Navigate to="/login" />;
+  if (!token || !user) {
+    return <Navigate to="/login" replace />;
   }
 
-  if (role && user.role !== role) {
-    return <Navigate to="/login" />;
+  if (roles && !roles.includes(user.role)) {
+    return <Navigate to="/login" replace />;
   }
 
   return children;
@@ -24,23 +30,23 @@ function App() {
     <Router>
       <Routes>
         <Route path="/login" element={<Login />} />
-        <Route 
-          path="/student/dashboard" 
+        <Route
+          path="/student/dashboard"
           element={
-            <PrivateRoute role="STUDENT">
+            <PrivateRoute roles={["STUDENT"]}>
               <StudentDashboard />
             </PrivateRoute>
-          } 
+          }
         />
-        <Route 
-          path="/admin/dashboard" 
+        <Route
+          path="/admin/dashboard"
           element={
-            <PrivateRoute role="ADMIN">
+            <PrivateRoute roles={["ADMIN", "FINANCE"]}>
               <AdminDashboard />
             </PrivateRoute>
-          } 
+          }
         />
-        <Route path="/" element={<Navigate to="/login" />} />
+        <Route path="/" element={<Navigate to="/login" replace />} />
       </Routes>
     </Router>
   );
